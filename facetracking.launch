@@ -29,18 +29,18 @@
     <param name="haarfile" type="str" value="lbpcascade_frontalface.xml" />
 </node>
 
-    <node pkg="nodelet" type="nodelet" name="debug_display" args="load display_nodelet/Display_node nodelet_manager_top">
+<!--    <node pkg="nodelet" type="nodelet" name="debug_display" args="load display_nodelet/Display_node nodelet_manager_top">
         <param name="video_stream" type="str" value="/camTop/output_video" />
     </node>
+-->
 
-
-   <node pkg="nodelet" type="nodelet" name="hiwr_tired" args="load hiwr_tired/Hiwr_tired_nodelet nodelet_manager_top" output="screen">
+<!--   <node pkg="nodelet" type="nodelet" name="hiwr_tired" args="load hiwr_tired/Hiwr_tired_nodelet nodelet_manager_top" output="screen">
    <param name="video_stream" type="str" value="/camTop/output_video" />
    </node>
 
    <node pkg="nodelet" type="nodelet" name="hiwr_code_scanner" args="load hiwr_code_scanner/Hiwr_code_scanner_nodelet nodelet_manager_top" output="screen">
    <param name="video_stream" type="str" value="/camTop/output_video" />
    </node>
-
+-->
 
 </launch>

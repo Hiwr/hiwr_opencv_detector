@@ -119,7 +119,7 @@ bool Hiwr_opencv_detector_nodelet::configure( ){
     nb_skipping_frames = 0;
     skipping_id = 0;
 
-    face_buffer_limit = 5;
+    face_buffer_limit = 1;
 
     NODELET_DEBUG("[Facetracking Nodelet][configure] spined %f %d %d \n", gf_qualityLevel ,  gf_minDistance ,  gf_maxCorners);
     return true;
