@@ -1,0 +1,16 @@
+<launch>
+    <arg name="device" default="Microsoft® LifeCam Cinema(TM)" />
+
+    <node name="uvc_cam_node" pkg="facetracking" type="uvc_cam_node" output="screen">
+    	<remap from="camera/image_raw" to="camera/rgb/image_color" />
+        <param name="device" value="$(arg device)" />
+        <param name="mode" value="MODE_YUYV" />
+        <param name="width" value="320" />
+        <param name="height" value="240" />
+        <param name="frame_rate" value="5" />
+        <param name="exposure" value="0" />
+        <param name="gain" value="100" /> 
+        <param name="haarfile" value="lbpcascade_frontalface.xml" />
+<!--        <param name="haarfile" value="haarcascade_mcs_eyepair_big.xml" />  -->
+    </node>
+</launch>
