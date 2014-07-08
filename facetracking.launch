@@ -1,0 +1,38 @@
+<!--
+   If you want to debug nodes or run the process in a different window:
+   http://wiki.ros.org/roslaunch/Tutorials/Roslaunch%20Nodes%20in%20Valgrind%20or%20GDB
+-->
+
+<launch>
+  <!-- Nodelet Manager Camera Top -->
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager_top" args="manager"/>
+
+  <!-- Nodelet Manager Camera Bottom -->
+  <!--<node pkg="nodelet" type="nodelet" name="nodelet_manager_bottom" args="manager"/>-->
+
+  <!-- Nodelet Manager facetracking -->
+  <!-- <node pkg="nodelet" type="nodelet" name="nodelet_manager_FT" args="manager"/> -->
+
+
+
+   <!-- UVCCam Nodelet Top -->
+
+   <node pkg="nodelet" type="nodelet" name="camTop" args="load cam_nodelet/UVCCamNode nodelet_manager_top" output="screen">
+     <!--<rosparam file="$(find hyve_camera_common)/param/config_Logitech_C920.yaml"/>-->
+     <rosparam file="$(find hyve_camera_common)/param/config_Microsoft_Lifecam_Cinema.yaml"/>
+   </node>
+
+   <!-- Facetracking node -->
+
+   <node pkg="nodelet" type="nodelet" name="FT" args="load facetracking_nodelet/HyveFaceTracker nodelet_manager_top" output="screen">
+    <param name="video_stream" type="str" value="/camTop/output_video" />
+    <!-- <rosparam file="$(find facetracking)/param/config_FT.yaml" command="load" /> -->
+    <!--<param name="haarfile" type="str" value="haarcascade_frontalface_alt.xml" />-->
+    <param name="haarfile" type="str" value="lbpcascade_frontalface.xml" />
+</node>
+
+
+    <node pkg="nodelet" type="nodelet" name="grayscale1" args="load nodelet_webcam_opencv/WebcamGrayscale nodelet_manager_top">
+        <param name="video_stream" type="str" value="/camTop/output_video" />
+    </node>
+</launch>
