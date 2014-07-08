@@ -1,8 +1,8 @@
 hiwr_opencv_detector
 ===============================================
  
-The hiwr\_opencv\_detector ROS package aims to detect object or faces. It uses a video stream in input, and a parameter file for each object to detect.
-It gives as a result a ROI, where the object is detected in the frame.
+The hiwr\_opencv\_detector ROS package aims to detect object or faces. It uses a video stream as an input, and a parameter file for each object to detect.
+It gives as a result a ROI (Region Of Interest), where the object is detected in the frame.
 
 
 Contributing
@@ -41,13 +41,14 @@ Node
 ----------------------
 
 ### Subscribed Topics
+
 * `/camera_name/output_video`
  * The video stream topic
 
 ### Published Topics
 
 * `/uvc_cam_node/roi`
-  * Get the last roi message (geometry_msgs/RegionOfInterest)
+  * Get the last ROI message (geometry_msgs/RegionOfInterest)
 
 ### Services
 
