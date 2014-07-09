@@ -39,7 +39,7 @@ void sigsegv_handler(int sig)
     ros::shutdown();                      // stop the main loop
 }
 
-ros::Publisher pub;
+
 
 
 Hiwr_opencv_detector_nodelet::Hiwr_opencv_detector_nodelet() {
@@ -144,7 +144,7 @@ void Hiwr_opencv_detector_nodelet::onInit(){
 
     frame.rows = 0;
 
-    pub = public_nh.advertise<sensor_msgs::RegionOfInterest>("/uvc_cam_node/roi", 1);
+    pub = public_nh.advertise<sensor_msgs::RegionOfInterest>("/hiwr_opencv_detector/roi", 1);
     // recovery of the picture
     image_sub_ = it_->subscribe(video_stream_name.c_str(), 1,&Hiwr_opencv_detector_nodelet::callback, this);
     im_processed = false;
@@ -199,12 +199,13 @@ void Hiwr_opencv_detector_nodelet::callback(const sensor_msgs::ImageConstPtr& ms
 // loop to check if the image needs to be subscribed
 void Hiwr_opencv_detector_nodelet::loop(){
     NODELET_DEBUG("Beginning loop");
+    //cv::namedWindow("Francis", CV_WINDOW_AUTOSIZE);
     while(ros::ok()){
         if((im_ptr!=NULL) && im_available){
             NODELET_DEBUG("[Facetracking Nodelet] loop : display");
             // cvtColor(frame, frame, );
             process_tracking_frame(frame);
-            //cv::imshow("Francis", frame);
+            //cv::imshow("Debug", frame);
             //  NODELET_DEBUG("[Facetracking Nodelet] loop : display end");
             //cv::waitKey(20);
             im_available = false;

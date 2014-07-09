@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   nodelet
   cv_bridge
+
 )
 
 find_package(OpenCV)

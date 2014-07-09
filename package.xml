@@ -29,7 +29,7 @@
   <run_depend>opencv</run_depend>
 
   <export>
-    <nodelet plugin="${prefix}/uvc_cam_node.xml"/>
+    <nodelet plugin="${prefix}/hiwr_opencv_detector.xml"/>
   </export>
 </package>
 

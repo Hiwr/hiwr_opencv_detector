@@ -42,15 +42,13 @@ Node
 
 ### Subscribed Topics
 
-* `/camera_name/output_video`
+* `/hiwr_camera_controller/output_video`
  * The video stream topic
 
 ### Published Topics
 
-* `/uvc_cam_node/roi`
+* `/hiwr_opencv_detector/roi`
   * Get the last ROI message (geometry_msgs/RegionOfInterest)
-
-### Services
 
 ### Parameters
 
