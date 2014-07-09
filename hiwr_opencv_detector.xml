@@ -1,5 +1,5 @@
 <library path="lib/libfacetracking_nodelet">
-  <class name="facetracking_nodelet/HyveFaceTracker" type="facetracking_nodelet::HyveFaceTracker" base_class_type="nodelet::Nodelet">
+  <class name="hiwr_opencv_detector_nodelet/HyveFaceTracker" type="hiwr_opencv_detector_nodelet::HyveFaceTracker" base_class_type="nodelet::Nodelet">
     <description>
       Implementing HyveFaceTracker node as a nodelet
     </description>

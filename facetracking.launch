@@ -24,7 +24,7 @@
 
    <!-- Facetracking node -->
 
-   <node pkg="nodelet" type="nodelet" name="FT" args="load facetracking_nodelet/HyveFaceTracker nodelet_manager_top" output="screen">
+   <node pkg="nodelet" type="nodelet" name="FT" args="load hiwr_opencv_detector_nodelet/HyveFaceTracker nodelet_manager_top" output="screen">
     <param name="video_stream" type="str" value="/camTop/output_video" />
     <!-- <rosparam file="$(find facetracking)/param/config_FT.yaml" command="load" /> -->
     <!--<param name="haarfile" type="str" value="haarcascade_frontalface_alt.xml" />-->

@@ -17,62 +17,11 @@
 * 
 ***********************************************************************/
 
-/* Much of this code is either heavily inspired by or taken directly from the
- * camera1394 ROS driver by Jack O'Quin
- */
-#include <dlfcn.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include <signal.h>
-#include <cstdio>
-#include <thread>
-#include <condition_variable>
-#include <mutex>
-#include <ros/ros.h>
-#include <ros/time.h>
-
-#include "std_msgs/String.h"
-#include "std_msgs/UInt8.h"
-
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <sensor_msgs/fill_image.h>
-#include <tf/transform_listener.h>
-//#include <camera_info_manager/camera_info_manager.h>
-#include <dynamic_reconfigure/server.h>
-#include <driver_base/SensorLevels.h>
-#include <driver_base/driver.h>
-
-#include <image_transport/image_transport.h>
-
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <image_transport/image_transport.h>
-
-#include <ros/console.h>
-
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/objdetect/objdetect.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <rospack/rospack.h>
-#include <opencv2/video/tracking.hpp>
-
-#include <pluginlib/class_list_macros.h>
-//#include <nodelet/nodelet.h>
-
-#include "uvc_cam_node.h"
-/*
-#include <devel/include/hyve_msg/SetState.h>
-#include <devel/include/hyve_msg/GetState.h>
-#include <devel/include/hyve_msg/TouchEvent.h>
-*/
+#include "hiwr_opencv_detector.h"
 
 using namespace cv;
 
-namespace facetracking_nodelet{
+namespace hiwr_opencv_detector{
 
 typedef driver_base::Driver Driver;
 typedef driver_base::SensorLevels Levels;
@@ -90,17 +39,15 @@ void sigsegv_handler(int sig)
     ros::shutdown();                      // stop the main loop
 }
 
-ros::Publisher pub;
-//ros::Publisher pubTiredValue;
-//ros::Publisher pubTiredState;
 
 
-HyveFaceTracker::HyveFaceTracker() {
-    NODELET_DEBUG("[Facetracking Nodelet] Constructor");
+
+Hiwr_opencv_detector_nodelet::Hiwr_opencv_detector_nodelet() {
+    NODELET_DEBUG("[hiwr_opencv_detector Nodelet] Constructor");
 }
 
 
-bool HyveFaceTracker::configure( ){
+bool Hiwr_opencv_detector_nodelet::configure( ){
     std::string defaultString ;
 
     printf("ros published \n");
@@ -108,16 +55,16 @@ bool HyveFaceTracker::configure( ){
     std::vector<std::string> search_path;
     pack.getSearchPathFromEnv(search_path);
     pack.crawl(search_path, false);
-    pack.find("facetracking", defaultString) ;
+    pack.find("hiwr_opencv_detector", defaultString) ;
 
     std::string file;
 
     private_nh.getParam("haarfile" , file);
     // ros::param::get("haarfile" , file);
-    NODELET_DEBUG("[Facetracking Nodelet][configure] loading file is: %s/  bob  %s", defaultString.c_str(), file.c_str());
+    NODELET_DEBUG("[hiwr_opencv_detector Nodelet][configure] loading file is: %s/  bob  %s", defaultString.c_str(), file.c_str());
     if (!cascade.load(defaultString+ '/'+ file)){
         //   if (!cascade.load(defaultString+ '/'+ "lbpcascade_frontalface.xml")){
-        NODELET_ERROR("[Facetracking Nodelet][configure] cascade load failed!");
+        NODELET_ERROR("[hiwr_opencv_detector Nodelet][configure] cascade load failed!");
         return false;
     }
 
@@ -178,7 +125,7 @@ bool HyveFaceTracker::configure( ){
     return true;
 }
 
-void HyveFaceTracker::onInit(){
+void Hiwr_opencv_detector_nodelet::onInit(){
     NODELET_DEBUG("[Facetracking Nodelet][onInit] beginning");
 
     ros::NodeHandle& public_nh = getNodeHandle();
@@ -199,20 +146,20 @@ void HyveFaceTracker::onInit(){
 
     pub = public_nh.advertise<sensor_msgs::RegionOfInterest>("/uvc_cam_node/roi", 1);
     // recovery of the picture
-    image_sub_ = it_->subscribe(video_stream_name.c_str(), 1,&HyveFaceTracker::callback, this);
+    image_sub_ = it_->subscribe(video_stream_name.c_str(), 1,&Hiwr_opencv_detector_nodelet::callback, this);
     im_processed = false;
     im_available = false;
 
     NODELET_DEBUG("[Facetracking Nodelet][onInit] call thread loop");
 
 
-    loop_thread = std::thread(&HyveFaceTracker::loop , this);
+    loop_thread = std::thread(&Hiwr_opencv_detector_nodelet::loop , this);
 
     NODELET_DEBUG("[Facetracking Nodelet][onInit] end");
 }
 
 // processing the image here
-void HyveFaceTracker::callback(const sensor_msgs::ImageConstPtr& msg){
+void Hiwr_opencv_detector_nodelet::callback(const sensor_msgs::ImageConstPtr& msg){
     NODELET_DEBUG("[Facetracking nodelet] callback : beginning");
 
     // recovery of the image
@@ -250,11 +197,9 @@ void HyveFaceTracker::callback(const sensor_msgs::ImageConstPtr& msg){
 }
 
 // loop to check if the image needs to be subscribed
-void HyveFaceTracker::loop(){
+void Hiwr_opencv_detector_nodelet::loop(){
     NODELET_DEBUG("Beginning loop");
-    //cv::namedWindow("Francis", CV_WINDOW_AUTOSIZE);
     while(ros::ok()){
-        // image_sub_ = it_->subscribe(video_stream_name.c_str(), 1,&HyveFaceTracker::callback, this);
         if((im_ptr!=NULL) && im_available){
             NODELET_DEBUG("[Facetracking Nodelet] loop : display");
             // cvtColor(frame, frame, );
@@ -269,7 +214,7 @@ void HyveFaceTracker::loop(){
     NODELET_DEBUG("End loop");
 }
 
-void HyveFaceTracker::process_tracking_frame(Mat frame ) {
+void Hiwr_opencv_detector_nodelet::process_tracking_frame(Mat frame ) {
     if (detect_box.width ==0 &&  detect_box.height==0)
     {
         NODELET_DEBUG("[Facetracking Nodelet] Processing detection");
@@ -326,16 +271,11 @@ void HyveFaceTracker::process_tracking_frame(Mat frame ) {
         }
 
 
-        /*detect_box =*/
         return;
         NODELET_DEBUG("[Facetracking Nodelet] End detection");
-        //std::cout  << "detect box is" << detect_box << std::endl;
-        // needed to reset the trackbox
 
         track_box = detect_box;
         keypoints.release();
-        //we want to calc getpoint on this image, this the haar is long, next frame maybe to different
-        // only if we get points ?
         get_keypoints( frame , detect_box);
 
         if(keypoints.size().height<5){
@@ -344,8 +284,7 @@ void HyveFaceTracker::process_tracking_frame(Mat frame ) {
             detect_box.height =0;
             keypoints.release(); //empty the list
         }
-        //  }
-        // skipping_id++;
+
     }
     else
     {
@@ -367,7 +306,6 @@ void HyveFaceTracker::process_tracking_frame(Mat frame ) {
             // Step 3: If we have keypoints, track them using optical flow
             track_box = track_keypoints(frame.clone(), prev_frame);
 
-            //Debug : draw them
             rectangle(frame, Point(track_box.x, track_box.y), Point(track_box.x+track_box.width, track_box.y+track_box.height), Scalar(0),2);
 
             //# Step 4: Drop keypoints that are too far from the main cluster
@@ -399,14 +337,8 @@ void HyveFaceTracker::process_tracking_frame(Mat frame ) {
     }
 
     prev_frame =frame.clone();
-    //prev_frame =frame.clone();
     NODELET_DEBUG("[Facetracking Nodelet] procees tracking : before drawing");
-    //drawResult(frame);
-    //cv::flip(frame,frame,1);
-    //imshow("toto", frame);
-    //cvWaitKey(1) ;
 
-    // publish only if good ?
     if( track_box.x > 0 && track_box.y > 0  && track_box.width >0 && track_box.height > 0 ) {
         sensor_msgs::RegionOfInterest msg;
         msg.x_offset =track_box.x;
@@ -416,11 +348,10 @@ void HyveFaceTracker::process_tracking_frame(Mat frame ) {
         pub.publish(msg);
         frame_index ++;
     }
-    //publish();
 
 }
 
-void HyveFaceTracker::process_tired_frame(Mat frame ) {
+void Hiwr_opencv_detector_nodelet::process_tired_frame(Mat frame ) {
     NODELET_DEBUG("Processing tired frame");
     Mat out(Size(1,1) , CV_8UC1) ;
     cv::resize(frame , out ,  out.size() );
@@ -434,38 +365,22 @@ void HyveFaceTracker::process_tired_frame(Mat frame ) {
     }else{
         msgStr.data = "dailight";
     }
-    //pubTiredValue.publish( msgUInt8);
-    //pubTiredState.publish( msgStr);
 }
 
-// useless : changes the currentState, which is not used anymore
-void HyveFaceTracker::process_frame(Mat frame ) {
+void Hiwr_opencv_detector_nodelet::process_frame(Mat frame ) {
     NODELET_DEBUG("process frame");
-    //if(currentState == TIRED ) {
-    //	return process_tired_frame(frame);
-    //}else
-    //if(currentState == TRACKING){
+
     return process_tracking_frame(frame);
-    // }
 }
 
-Rect HyveFaceTracker::track_keypoints(Mat img1, Mat img0){
-    /*   # Reshape the current keypoints into a numpy array required
-# by calcOpticalFlowPyrLK()
-         */
+Rect Hiwr_opencv_detector_nodelet::track_keypoints(Mat img1, Mat img0){
     Mat p0 = keypoints;
     Mat p0r;
     Mat p1;
     Mat status;
     Mat err;
-    // # Calculate the optical flow from the previous frame to the current frame
-
-    //std::cout << "will cal optical " << keypoints << std::endl;
 
     calcOpticalFlowPyrLK(img0, img1, p0, p1 , status, err);
-
-    //# Do the reverse calculation: from the current frame to the previous frame
-    // try:
 
     calcOpticalFlowPyrLK(img1, img0, p1, p0r, status, err);
     Mat mdiff;
@@ -506,7 +421,7 @@ Rect HyveFaceTracker::track_keypoints(Mat img1, Mat img0){
     return track_box;
 }
 
-void HyveFaceTracker::get_keypoints(Mat input_image, Rect detect_box){
+void Hiwr_opencv_detector_nodelet::get_keypoints(Mat input_image, Rect detect_box){
 
     NODELET_DEBUG("[Facetracking Nodelet] getKeypoints : beginning");
     Mat area = Mat(input_image, detect_box);
@@ -516,10 +431,7 @@ void HyveFaceTracker::get_keypoints(Mat input_image, Rect detect_box){
 
     cv::goodFeaturesToTrack(
                 area, out, 30, 0.02, 7.0 );
-    // ,noArray(), 3, true, 0.04) ;
-    /*  , gf_maxCorners , gf_qualityLevel , gf_min_to_cluster
-            , noArray()  , gf_blockSize , gf_useHarrisDetector, 0.04 );*/
-    //mask = self.mask, **self.gf_params)
+
     if ( out.cols > 0){
         keypoints = out;
     }
@@ -539,10 +451,9 @@ void HyveFaceTracker::get_keypoints(Mat input_image, Rect detect_box){
 
 }
 
-void HyveFaceTracker::add_keypoints( Mat input_image,Rect track_box){
+void Hiwr_opencv_detector_nodelet::add_keypoints( Mat input_image,Rect track_box){
 
     Mat mask = Mat( input_image.size().height ,  input_image.size().width , CV_8UC1, Scalar::all(0));
-    //TODO maybe we should deal with ange
     int x = track_box.x ; // + detect_box.x ;
     int y = track_box.y ;//+ detect_box.y;
     int h = track_box.height;
@@ -564,10 +475,7 @@ void HyveFaceTracker::add_keypoints( Mat input_image,Rect track_box){
 
     RotatedRect mask_box ;
     mask_box.center = Point( x +w/2 , y  + h/2);
-    //      mask_box.center = Point( 100 , 100);
     mask_box.size = Size(w_new , h_new );
-    //   mask_box.size = Size(55 , 55);
-    //std::cout << "mask_box " << std::endl;
     mask_box.angle=0;
 
     //# Create a filled white ellipse within the track_box to define the ROI
@@ -593,20 +501,9 @@ void HyveFaceTracker::add_keypoints( Mat input_image,Rect track_box){
             }
         }
     }
-    //TODO remove duplicate keypoints    self.keypoints = list(set(self.keypoints))
-    /*
-           for x, y in np.float32(new_keypoints).reshape(-1, 2):
-           distance = self.distance_to_cluster((x,y), self.keypoints)
-           if distance > self.add_keypoint_distance:
-           self.keypoints.append((x,y))
-# Briefly display a blue disc where the new point is added
-if self.show_add_drop:
-cv2.circle(self.marker_image, (x, y), 3, (255, 255, 0, 0), cv.CV_FILLED, 2, 0)
-         */
-
 }
 
-int HyveFaceTracker::distance_to_cluster(Point2f test_point, Mat cluster){
+int Hiwr_opencv_detector_nodelet::distance_to_cluster(Point2f test_point, Mat cluster){
     int min_distance = 10000;
     for(int i = 0; i< cluster.size().height; i++){
         Point2f point = cluster.at<Point2f>(i);
@@ -619,7 +516,7 @@ int HyveFaceTracker::distance_to_cluster(Point2f test_point, Mat cluster){
     return min_distance;
 }
 
-int HyveFaceTracker::drop_keypoints(int min_keypoints, double outlier_threshold,double mse_threshold){
+int Hiwr_opencv_detector_nodelet::drop_keypoints(int min_keypoints, double outlier_threshold,double mse_threshold){
     int sum_x		= 0;
     int sum_y		= 0;
     double sse	= 0;
@@ -681,25 +578,17 @@ int HyveFaceTracker::drop_keypoints(int min_keypoints, double outlier_threshold,
 /**
      * Detect faces using OpenCV's built-in module          -> OK
      */
-Rect HyveFaceTracker::detectInitialFaces(Mat& frame)
+Rect Hiwr_opencv_detector_nodelet::detectInitialFaces(Mat& frame)
 {
     double min_face_size=20;
     double max_face_size=200;
 
     Mat gray;
-    //Mat gray = frame;
     NODELET_DEBUG("[Facetracking Nodelet] detectInitialFaces : frame rows : %d", frame.rows);
-    //frame.copyTo(gray);
     NODELET_DEBUG("[Facetracking Nodelet] detectInitialFaces : gray rows : %d", gray.rows);
-    // cvtColor(frame, gray ,CV_16U); // -> marche pas
 
     equalizeHist( frame, frame);
 
-    //Rect bob; // -> marche pas
-    //faces[0] = bob;
-
-    //cascade.detectMultiScale(gray, faces, 1.1, 3 ,0 , Size(30,30), Size(1000,1000) );
-    //cascade.detectMultiScale(frame, faces, 1.1, 3 );//,0 , Size(3,3), Size(10,10) );
     cascade.detectMultiScale( frame, faces, 1.2, 2,  0|CV_HAAR_SCALE_IMAGE, Size(25, 25), Size(120,120));
 
     // Draw circles on the detected faces
@@ -711,12 +600,12 @@ Rect HyveFaceTracker::detectInitialFaces(Mat& frame)
         ellipse( frame, center, Size( faces[i].width*0.5, faces[i].height*0.5), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
     }
 
-    NODELET_DEBUG("[Facetracking Nodelet] detectInitialFaces : number of Rects detected : %d", faces.size());
+    NODELET_DEBUG("[hiwr_opencv_detector Nodelet] detectInitialFaces : number of Rects detected : %d", faces.size());
     return filterFaces(frame);
 
 }
 
-Rect HyveFaceTracker::getWindow(Rect r){
+Rect Hiwr_opencv_detector_nodelet::getWindow(Rect r){
     Point pt(r.x + r.width/2, r.y + r.height/2);
 
     int dim = max( r.height , r.width) * 1.5;
@@ -730,7 +619,7 @@ Rect HyveFaceTracker::getWindow(Rect r){
     return win;
 }
 
-Rect HyveFaceTracker::filterFaces(Mat& frame){
+Rect Hiwr_opencv_detector_nodelet::filterFaces(Mat& frame){
     Rect currentBest ;
     if(faces.size()==0){
         return currentBest;
@@ -752,11 +641,11 @@ Rect HyveFaceTracker::filterFaces(Mat& frame){
 
 }
 
-double HyveFaceTracker::dist(Rect current, int width, int height ){
+double Hiwr_opencv_detector_nodelet::dist(Rect current, int width, int height ){
     return  sqrt( pow(  (current.x + current.width/2) - width/2 , 2 ) + pow( (current.y + current.height/2)-height/2 , 2 ) ) ;
 }
 
-void HyveFaceTracker::drawResult(Mat& frame)
+void Hiwr_opencv_detector_nodelet::drawResult(Mat& frame)
 {
     if(detect_box.x == 0 && detect_box.y == 0){
         NODELET_DEBUG("[Face tracking Nodelet] drawResult : no box detected");
@@ -789,98 +678,8 @@ void HyveFaceTracker::drawResult(Mat& frame)
 
 }
 
-//};
 
-//HyveFaceTracker* cam;
-
-/*void updateSpiningState(){
-    if(currentState == OFF ) {
-        cam->setProcessingState(false);
-    }else{
-        cam->setProcessingState(true);
-    }
-}*/
-
-/*bool SetState( hyve_msg::SetState::Request &req ,hyve_msg::SetState::Response  &res  ){
-
-    printf("# facetracking setState service call %d\n" , req.state);
-    res.state = req.state;
-    if(req.state ==true){
-        currentState = TRACKING;
-    }else if(currentState == TRACKING){
-        currentState = OFF;
-    }
-    //updateSpiningState();
-    return true;
-
-}
-bool GetState( hyve_msg::GetState::Request &req ,hyve_msg::GetState::Response  &res  ){
-    if(currentState == TRACKING ) {
-        res.state = true;
-    }else{
-        res.state =false;
-    }
-    printf("# facetracking getState service call %d\n" , res.state);
-    return true;
-}*/
-
-
-/*bool SetTiredState( hyve_msg::SetState::Request &req ,hyve_msg::SetState::Response  &res  ){
-    printf("# facetracking setTiredState service call %d\n" , req.state);
-    res.state = req.state;
-    if(req.state ==true){
-        currentState = TIRED;
-    }else if(currentState == TIRED){
-        currentState = OFF;
-    }
-    //updateSpiningState();
-    return true;
-
-}
-bool GetTiredState( hyve_msg::GetState::Request &req ,hyve_msg::GetState::Response  &res  ){
-    if(currentState == TIRED ) {
-        res.state = true;
-    }else{
-        res.state =false;
-
-    }
-    printf("# facetracking getTiredState service call %d\n" , res.state);
-    return true;
-}*/
-
-
-/*int main(int argc, char **argv)
-{
-
-    ros::init(argc, argv, "HyveFaceTracker");
-
-
-    ros::NodeHandle n("~");
-
-    pub = n.advertise<sensor_msgs::RegionOfInterest>("roi", 1000);
-
-    pubTiredState = n.advertise<std_msgs::String>("Tired/state", 1000);
-    pubTiredValue = n.advertise<std_msgs::UInt8>("Tired/value", 1000);
-
-    //cam = new HyveFaceTracker();
-    ros::ServiceServer serviceSetter = n.advertiseService("setTrackingState", SetState);
-    ros::ServiceServer serviceGetter = n.advertiseService("getTrackingState", GetState);
-
-    ros::ServiceServer serviceTiredSetter = n.advertiseService("setTiredState", SetTiredState);
-    ros::ServiceServer serviceTiredGetter = n.advertiseService("getTiredState", GetTiredState);
-
-
-
-    //cam->configure();
-    //cam->configurePublishing(n);
-    //cam->spin();
-    //printf("return form spinnded \n");
-    return 0;
-}*/
-
-
-
-PLUGINLIB_DECLARE_CLASS(facetracking_nodelet, HyveFaceTracker, facetracking_nodelet::HyveFaceTracker, nodelet::Nodelet);
+PLUGINLIB_DECLARE_CLASS(hiwr_opencv_detector, Hiwr_opencv_detector_nodelet, hiwr_opencv_detector::Hiwr_opencv_detector_nodelet, nodelet::Nodelet);
 }
 
 
