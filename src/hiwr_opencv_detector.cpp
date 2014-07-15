@@ -60,7 +60,7 @@ namespace hiwr_opencv_detector{
     private_nh_.getParam("haarfile" , file);
     // ros::param::get("haarfile" , file);
     NODELET_DEBUG("[hiwr_opencv_detector Nodelet][configure] loading file is: %s/  bob  %s", default_string.c_str(), file.c_str());
-    if (!cascade.load(default_string+ '/'+ file)){
+    if (!cascade_.load(default_string+ '/'+ file)){
         //   if (!cascade.load(defaultString+ '/'+ "lbpcascade_frontalface.xml")){
       NODELET_ERROR("[hiwr_opencv_detector Nodelet][configure] cascade load failed!");
       return false;
@@ -74,7 +74,7 @@ namespace hiwr_opencv_detector{
 
     ros::param::get("~gf_qualityLevel", gf_quality_level_);
     ros::param::get("~gf_minDistance", gf_min_distance_);
-    ros::param::get("~gf_blockSize", gf_block_size);
+    ros::param::get("~gf_blockSize", gf_block_size_);
     ros::param::get("~gf_useHarrisDetector", gf_use_harris_detector_);
     ros::param::get("~drop_keypoints_interval", drop_keypoints_interval_);
 
@@ -98,7 +98,7 @@ namespace hiwr_opencv_detector{
     // = rospy.get_param("~gf_qualityLevel", 0.02)
     gf_quality_level_ = 0.02;
     gf_min_distance_  = 2 ;
-    gf_block_size = 5 ;
+    gf_block_size_ = 5 ;
     gf_use_harris_detector_ = true; //= rospy.get_param("~gf_useHarrisDetector", true);
     frame_index_ = 0;
     drop_keypoints_interval_ = 2;
@@ -112,14 +112,14 @@ namespace hiwr_opencv_detector{
     pct_err_z_ =  0.42;
     max_mse_ = 10000;
     expand_roi_init_ = 1.02;
-    expand_roi_ = expand_roi_init;
+    expand_roi_ = expand_roi_init_;
 
     nb_skipping_frames_ = 0;
     skipping_id_ = 0;
 
     face_buffer_limit_ = 1;
 
-    NODELET_DEBUG("[Facetracking Nodelet][configure] spined %f %d %d \n", gf_qualityLevel ,  gf_minDistance ,  gf_maxCorners);
+    NODELET_DEBUG("[Facetracking Nodelet][configure] spined %f %d %d \n", gf_quality_level_ ,  gf_min_distance_ ,  gf_max_corners_);
     return true;
   }
 
@@ -134,7 +134,7 @@ namespace hiwr_opencv_detector{
       NODELET_ERROR("[Facetracking Nodelet][onInit] configure failed!");
     }
 
-    if(!private_nh.getParam("video_stream", video_stream_name_)){
+    if(!private_nh_.getParam("video_stream", video_stream_name_)){
       NODELET_ERROR("[Facetracking Nodelet][onInit] Problem recovering the video stream");
       return;
     }
@@ -162,7 +162,7 @@ namespace hiwr_opencv_detector{
 
     // recovery of the image
     try{
-      im_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
+      im_ptr_ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
         // NODELET_DEBUG("[Facetracking Nodelet] callback : frame type : %d", im_ptr->type());
 
         // facetracking
@@ -173,11 +173,11 @@ namespace hiwr_opencv_detector{
             // collecting the infos for frame
         frame_ = im_ptr_->image;
 
-        NODELET_DEBUG("[Facetracking Nodelet] callback : frame type : %d", frame.type());
+        NODELET_DEBUG("[Facetracking Nodelet] callback : frame type : %d", frame_.type());
 
             // cvtColor(frame, frame, CV_8UC1);
 
-        NODELET_DEBUG("[Facetracking Nodelet] callback : frame type 2 : %d", frame.type());
+        NODELET_DEBUG("[Facetracking Nodelet] callback : frame type 2 : %d", frame_.type());
 
 
         im_available_ = true;
@@ -199,7 +199,7 @@ namespace hiwr_opencv_detector{
     NODELET_DEBUG("Beginning loop");
     //cv::namedWindow("Francis", CV_WINDOW_AUTOSIZE);
     while(ros::ok()){
-      if((im_ptr!=NULL) && im_available_){
+      if((im_ptr_!=NULL) && im_available_){
         NODELET_DEBUG("[Facetracking Nodelet] loop : display");
             // cvtColor(frame, frame, );
         processTrackingFrame(frame_);
@@ -242,17 +242,17 @@ namespace hiwr_opencv_detector{
         mean.height += face_buffer_.at(i).height;
       }
       if(face_size >0 ){
-        mean.x /= face_size_;
-        mean.y /= face_size_;
-        mean.width /= face_size_;
-        mean.height /= face_size_;
+        mean.x /= face_size;
+        mean.y /= face_size;
+        mean.width /= face_size;
+        mean.height /= face_size;
         rectangle(frame, mean, Scalar(255),2);
         sensor_msgs::RegionOfInterest msg;
         msg.x_offset =mean.x;
         msg.y_offset =mean.y;
         msg.width =mean.width;
         msg.height =mean.height;
-        pub.publish(msg);
+        pub_.publish(msg);
 
       }
 
@@ -300,9 +300,9 @@ namespace hiwr_opencv_detector{
 
           if(keypoints_.size().height>5){
             // Step 3: If we have keypoints, track them using optical flow
-            track_box_ = trackKeypoints(frame.clone(), prev_frame);
+            track_box_ = trackKeypoints(frame.clone(), prev_frame_);
 
-            rectangle(frame, Point(track_box_.x, track_box_.y), Point(track_box_.x+track_box_.width, track_box.y+track_box_.height), Scalar(0),2);
+            rectangle(frame, Point(track_box_.x, track_box_.y), Point(track_box_.x+track_box_.width, track_box_.y+track_box_.height), Scalar(0),2);
 
             //# Step 4: Drop keypoints that are too far from the main cluster
             if (frame_index_ % drop_keypoints_interval_ == 0 and keypoints_.size().height>0){
@@ -409,7 +409,7 @@ namespace hiwr_opencv_detector{
           if(keypoints_.size().height >6 ){
             track_box_ = fitEllipse(keypoints_).boundingRect();
           }else{
-            printf(" we should not be there as this probably introdu a bug later %d  %d \n", keypoints.size().width , keypoints.size().height );
+            printf(" we should not be there as this probably introdu a bug later %d  %d \n", keypoints_.size().width , keypoints_.size().height );
             track_box_ = boundingRect(keypoints_);
           }
         }
@@ -447,7 +447,7 @@ namespace hiwr_opencv_detector{
 
       }
 
-      void HiwrOpencvDetectorNodelet::add_keypoints( Mat input_image,Rect track_box){
+      void HiwrOpencvDetectorNodelet::addKeypoints( Mat input_image,Rect track_box){
 
         Mat mask = Mat( input_image.size().height ,  input_image.size().width , CV_8UC1, Scalar::all(0));
     int x = track_box.x ; // + detect_box.x ;
@@ -456,8 +456,8 @@ namespace hiwr_opencv_detector{
     int w = track_box.width;
 
     // # Expand the track box to look for new keypoints
-    int  w_new = expand_roi * w;
-    int  h_new = expand_roi * h;
+    int  w_new = expand_roi_ * w;
+    int  h_new = expand_roi_ * h;
 
     Point2f pt1 ;
     pt1.x =  x - w_new/2   + w/2;
@@ -477,8 +477,8 @@ namespace hiwr_opencv_detector{
     //# Create a filled white ellipse within the track_box to define the ROI
     ellipse(mask, mask_box, Scalar(255), CV_FILLED ,8);
 
-    for(int i =0; i< keypoints.size().height ; i++){
-      Point2f p = keypoints.at<Point2f>(i);
+    for(int i =0; i< keypoints_.size().height ; i++){
+      Point2f p = keypoints_.at<Point2f>(i);
       circle(mask, p , 5, 0, -1);
     }
 
@@ -492,14 +492,14 @@ namespace hiwr_opencv_detector{
       for(int i = 0 ; i<new_keypoints.size().height ; i++ ){
         Point2f point =  new_keypoints.at<Point2f>(i);
         int distance = distanceToCluster(point , keypoints_);
-        if (distance > add_keypoint_distance){
-          keypoints.push_back(point);
+        if (distance > add_keypoint_distance_){
+          keypoints_.push_back(point);
         }
       }
     }
   }
 
-  int HiwrOpencvDetectorNodelet::distance_to_cluster(Point2f test_point, Mat cluster){
+  int HiwrOpencvDetectorNodelet::distanceToCluster(Point2f test_point, Mat cluster){
     int min_distance = 10000;
     for(int i = 0; i< cluster.size().height; i++){
       Point2f point = cluster.at<Point2f>(i);
@@ -512,7 +512,7 @@ namespace hiwr_opencv_detector{
     return min_distance;
   }
 
-  int HiwrOpencvDetectorNodelet::drop_keypoints(int min_keypoints, double outlier_threshold,double mse_threshold){
+  int HiwrOpencvDetectorNodelet::dropKeypoints(int min_keypoints, double outlier_threshold,double mse_threshold){
     int sum_x		= 0;
     int sum_y		= 0;
     double sse	= 0;
@@ -585,18 +585,18 @@ namespace hiwr_opencv_detector{
 
       equalizeHist( frame, frame);
 
-      cascade.detectMultiScale( frame, faces, 1.2, 2,  0|CV_HAAR_SCALE_IMAGE, Size(25, 25), Size(120,120));
+      cascade_.detectMultiScale( frame, faces_, 1.2, 2,  0|CV_HAAR_SCALE_IMAGE, Size(25, 25), Size(120,120));
 
     // Draw circles on the detected faces
-      for( int i = 0; i < faces.size(); i++ )
+      for( int i = 0; i < faces_.size(); i++ )
       {
-        min_face_size = faces[0].width*0.8;
-        max_face_size = faces[0].width*1.2;
-        Point center( faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5 );
-        ellipse( frame, center, Size( faces[i].width*0.5, faces[i].height*0.5), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
+        min_face_size = faces_[0].width*0.8;
+        max_face_size = faces_[0].width*1.2;
+        Point center( faces_[i].x + faces_[i].width*0.5, faces_[i].y + faces_[i].height*0.5 );
+        ellipse( frame, center, Size( faces_[i].width*0.5, faces_[i].height*0.5), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
       }
 
-      NODELET_DEBUG("[hiwr_opencv_detector Nodelet] detectInitialFaces : number of Rects detected : %d", faces.size());
+      NODELET_DEBUG("[hiwr_opencv_detector Nodelet] detectInitialFaces : number of Rects detected : %d", faces_.size());
       return filterFaces(frame);
 
     }
@@ -617,15 +617,15 @@ namespace hiwr_opencv_detector{
 
     Rect HiwrOpencvDetectorNodelet::filterFaces(Mat& frame){
       Rect currentBest ;
-      if(faces.size()==0){
+      if(faces_.size()==0){
         return currentBest;
       }
-      currentBest=faces[0];
+      currentBest=faces_[0];
     double currentDist = dist(currentBest, frame.cols, frame.rows);//cam_info_.width, cam_info_.height);
 
 Rect current;
-for (unsigned int i = 1; i < faces.size(); i++){
-  current = faces[i];
+for (unsigned int i = 1; i < faces_.size(); i++){
+  current = faces_[i];
         double _dist = dist(current, frame.rows, frame.cols);//cam_info_.width, cam_info_.height);
 if(_dist<currentDist){
   currentDist = _dist;

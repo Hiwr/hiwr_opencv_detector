@@ -149,7 +149,6 @@ public:
     void processTiredFrame(Mat frame );
     void processFrame(Mat frame );
     Rect trackKeypoints(Mat img1, Mat img0);
-    void getKeypoints(Mat input_image, Rect detect_box);
     void addKeypoints( Mat input_image,Rect track_box);
     int distanceToCluster(Point2f test_point, Mat cluster);
     int dropKeypoints(int min_keypoints, double outlier_threshold,double mse_threshold);
@@ -158,6 +157,8 @@ public:
     Rect filterFaces(Mat& frame);
     double dist(Rect current, int width, int height );
     void drawResult(Mat& frame);
+    void getKeypoints(Mat input_image, Rect detect_box);
+
 
 };
 
