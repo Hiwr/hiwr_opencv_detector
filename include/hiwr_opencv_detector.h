@@ -49,95 +49,95 @@ namespace hiwr_opencv_detector
 typedef driver_base::Driver Driver;
 typedef driver_base::SensorLevels Levels;
 
-class Hiwr_opencv_detector_nodelet : public nodelet::Nodelet{
+class HiwrOpencvDetectorNodelet : public nodelet::Nodelet{
 
 protected:
 
     // pointer on the image
-    cv_bridge::CvImagePtr im_ptr;
+    cv_bridge::CvImagePtr im_ptr_;
 
-    Mat frame;
-    bool configUpdated;
+    Mat frame_;
+    bool configUpdated_;
 
 
 private:
-    ros::NodeHandle private_nh;
-    ros::NodeHandle privNH_;              // private node handle
+    ros::NodeHandle private_nh_;
+    ros::NodeHandle priv_NH_;              // private node handle
     ros::NodeHandle camera_nh_;           // camera name space handle
     sensor_msgs::Image image_;
 
     /** image transport interfaces */
-    IplImage  *imageIpl  ;
+    IplImage  *image_ipl_ ;
 
     // suscriber for the camera
-    std::string video_stream_name;
+    std::string video_stream_name_;
     image_transport::Subscriber image_sub_;
     image_transport::ImageTransport * it_;
-    ros::Publisher pub;
+    ros::Publisher pub_;
 
 
-    std::thread loop_thread;
+    std::thread loop_thread_;
 
-    bool im_processed;
-    bool im_subscribed;
-    bool im_available;
+    bool im_processed_;
+    bool im_subscribed_;
+    bool im_available_;
 
-    bool spiningState;
-    bool publishingState;
-    bool processingState;
+    bool spining_state_;
+    bool publishing_state_;
+    bool processing_state_;
 
-    unsigned char *final ;
+    unsigned char *final_;
 
-    image_transport::Publisher imagePublisher;
+    image_transport::Publisher image_publisher_;
     image_transport::Publisher image_pub_;
 
-    std::thread spin_thread;
-    std::thread loop_grab_image_thread;
+    std::thread spin_thread_;
+    std::thread loop_grab_image_thread_;
 
-    ros::Subscriber sub;
+    ros::Subscriber sub_;
 
-    int nb_skipping_frames;
-    int skipping_id;
+    int nb_skipping_frames_;
+    int skipping_id_;
 
-    CascadeClassifier cascade;
-    vector<Rect> faces;
+    CascadeClassifier cascade_;
+    vector<Rect> faces_;
 
-    Rect detect_box;
-    Rect track_box;
+    Rect detect_box_;
+    Rect track_box_;
 
-    Mat keypoints;
-    Mat prev_frame ;
+    Mat keypoints_;
+    Mat prev_frame_;
 
-    int gf_maxCorners;
-
-
-    double gf_qualityLevel ;
-    int gf_minDistance ;
-    int gf_blockSize ;
-    bool gf_useHarrisDetector ;
-    int frame_index;
-
-    int add_keypoint_distance ;
-    int add_keypoints_interval ;
+    int gf_max_corners_;
 
 
-    int drop_keypoints_interval;
-    int abs_min_keypoints ;
-    double  std_err_xy ;
-    double  pct_err_z ;
-    int max_mse ;
+    double gf_quality_level_ ;
+    int gf_min_distance_ ;
+    int gf_block_size_ ;
+    bool gf_use_harris_detector_ ;
+    int frame_index_;
 
-    int min_keypoints ;
+    int add_keypoint_distance_ ;
+    int add_keypoints_interval_ ;
 
-    double expand_roi_init ;
-    double expand_roi ;
 
-    std::deque<Rect> face_buffer;
-    int face_buffer_limit;
+    int drop_keypoints_interval_;
+    int abs_min_keypoints_ ;
+    double  std_err_xy_ ;
+    double  pct_err_z_;
+    int max_mse_ ;
+
+    int min_keypoints_ ;
+
+    double expand_roi_init_ ;
+    double expand_roi_ ;
+
+    std::deque<Rect> face_buffer_;
+    int face_buffer_limit_;
 
 public:
 
-   Hiwr_opencv_detector_nodelet();
+   HiwrOpencvDetectorNodelet();
 
 
     virtual void onInit();
@@ -145,14 +145,14 @@ public:
     void loop();
 
     bool configure( );
-    void process_tracking_frame(Mat frame );
-    void process_tired_frame(Mat frame );
-    void process_frame(Mat frame );
-    Rect track_keypoints(Mat img1, Mat img0);
-    void get_keypoints(Mat input_image, Rect detect_box);
-    void add_keypoints( Mat input_image,Rect track_box);
-    int distance_to_cluster(Point2f test_point, Mat cluster);
-    int drop_keypoints(int min_keypoints, double outlier_threshold,double mse_threshold);
+    void processTrackingFrame(Mat frame );
+    void processTiredFrame(Mat frame );
+    void processFrame(Mat frame );
+    Rect trackKeypoints(Mat img1, Mat img0);
+    void getKeypoints(Mat input_image, Rect detect_box);
+    void addKeypoints( Mat input_image,Rect track_box);
+    int distanceToCluster(Point2f test_point, Mat cluster);
+    int dropKeypoints(int min_keypoints, double outlier_threshold,double mse_threshold);
     Rect detectInitialFaces(Mat& frame);
     Rect getWindow(Rect r);
     Rect filterFaces(Mat& frame);
@@ -161,6 +161,6 @@ public:
 
 };
 
-PLUGINLIB_DECLARE_CLASS(hiwr_opencv_detector, Hiwr_opencv_detector_nodelet, hiwr_opencv_detector::Hiwr_opencv_detector_nodelet, nodelet::Nodelet);
+PLUGINLIB_DECLARE_CLASS(hiwr_opencv_detector, HiwrOpencvDetectorNodelet, hiwr_opencv_detector::HiwrOpencvDetectorNodelet, nodelet::Nodelet);
 }
 
