@@ -1,0 +1,7 @@
+<library path="lib/libhiwr_opencv_detector_nodelet">
+  <class name="hiwr_opencv_detector/HiwrOpencvDetectorNodelet" type="hiwr_opencv_detector::HiwrOpencvDetectorNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      Implementing HyveFaceTracker node as a nodelet
+    </description>
+  </class>
+</library>
