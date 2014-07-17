@@ -1,45 +1,69 @@
+/*********************************************************************
+*
+*
+* Copyright 2014 Worldline
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+***********************************************************************/
 
+// Common
 #include "UVCCamConfig.h"
-#include "opencv2/features2d/features2d.hpp"
-
 #include <list>
 #include <dlfcn.h>
 #include <stdio.h>
 #include <unistd.h>
-
 #include <cstdio>
+#include <signal.h>
+#include <image_transport/image_transport.h>
+
+// Thread
 #include <thread>
+
+// Msgs
+#include "std_msgs/UInt8.h"
+#include "std_msgs/String.h"
+
+// ROS
 #include <ros/ros.h>
 #include <ros/time.h>
 #include <ros/console.h>
 #include <rospack/rospack.h>
-
-#include "std_msgs/UInt8.h"
-#include "std_msgs/String.h"
-
-#include <image_transport/image_transport.h>
-
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/objdetect/objdetect.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/video/tracking.hpp>
-
-#include <pluginlib/class_list_macros.h>
-
-#include <nodelet/nodelet.h>
-
 #include <cv_bridge/cv_bridge.h>
 
-#include <driver_base/SensorLevels.h>
-#include <driver_base/driver.h>
-
-
-#include <signal.h>
-
+// Sensors
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/fill_image.h>
 
+// Driver Base
+#include <driver_base/SensorLevels.h>
+#include <driver_base/driver.h>
+
+// Camera
+
+// Opencv
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/video/tracking.hpp>
+#include "opencv2/features2d/features2d.hpp"
+
+// Nodelet
+#include <nodelet/nodelet.h>
+
+
+#include <pluginlib/class_list_macros.h>
 
 using namespace cv;
 
@@ -61,6 +85,7 @@ protected:
 
 
 private:
+    // Node handler
     ros::NodeHandle private_nh_;
     ros::NodeHandle priv_NH_;              // private node handle
     ros::NodeHandle camera_nh_;           // camera name space handle
@@ -74,7 +99,6 @@ private:
     image_transport::Subscriber image_sub_;
     image_transport::ImageTransport * it_;
     ros::Publisher pub_;
-
 
     std::thread loop_thread_;
 
@@ -91,9 +115,11 @@ private:
     image_transport::Publisher image_publisher_;
     image_transport::Publisher image_pub_;
 
+    // Threads
     std::thread spin_thread_;
     std::thread loop_grab_image_thread_;
 
+    //Subscriber(s)
     ros::Subscriber sub_;
 
     int nb_skipping_frames_;
@@ -105,16 +131,16 @@ private:
     Rect detect_box_;
     Rect track_box_;
 
+    // Frames
     Mat keypoints_;
     Mat prev_frame_;
 
     int gf_max_corners_;
-
-
     double gf_quality_level_ ;
     int gf_min_distance_ ;
     int gf_block_size_ ;
     bool gf_use_harris_detector_ ;
+
     int frame_index_;
 
     int add_keypoint_distance_ ;
@@ -136,9 +162,7 @@ private:
     int face_buffer_limit_;
 
 public:
-
-   HiwrOpencvDetectorNodelet();
-
+    HiwrOpencvDetectorNodelet();
 
     virtual void onInit();
     void callback(const sensor_msgs::ImageConstPtr& msg);
@@ -158,8 +182,6 @@ public:
     double dist(Rect current, int width, int height );
     void drawResult(Mat& frame);
     void getKeypoints(Mat input_image, Rect detect_box);
-
-
 };
 
 PLUGINLIB_DECLARE_CLASS(hiwr_opencv_detector, HiwrOpencvDetectorNodelet, hiwr_opencv_detector::HiwrOpencvDetectorNodelet, nodelet::Nodelet);
