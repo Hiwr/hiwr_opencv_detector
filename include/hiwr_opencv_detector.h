@@ -18,7 +18,7 @@
 ***********************************************************************/
 
 // Common
-#include "UVCCamConfig.h"
+//#include "UVCCamConfig.h"
 #include <list>
 #include <dlfcn.h>
 #include <stdio.h>
