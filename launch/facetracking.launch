@@ -1,0 +1,21 @@
+<!--
+   If you want to debug nodes or run the process in a different window:
+   http://wiki.ros.org/roslaunch/Tutorials/Roslaunch%20Nodes%20in%20Valgrind%20or%20GDB
+-->
+
+<launch>
+  <!-- Nodelet Manager Camera Top -->
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager_top" args="manager"/>
+
+   <!-- UVCCam Nodelet Top -->
+   <node pkg="nodelet" type="nodelet" name="camTop" args="load hiwr_camera_controller/HiwrCameraControllerNodelet nodelet_manager_top" output="screen">
+     <!--<rosparam file="$(find hiwr_camera_controller)/param/config_Logitech_C920.yaml"/>-->
+     <rosparam file="$(find hiwr_camera_controller)/param/config_Microsoft_Lifecam_Cinema.yaml"/>
+   </node>
+
+   <!-- Facetracking node -->
+   <node pkg="nodelet" type="nodelet" name="FT" args="load hiwr_opencv_detector/HiwrOpencvDetectorNodelet nodelet_manager_top" output="screen">
+    <param name="video_stream" type="str" value="/camTop/output_video" />
+    <param name="haarfile" type="str" value="cascade/lbpcascade_frontalface.xml" />
+</node>
+</launch>

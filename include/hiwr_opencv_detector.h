@@ -65,6 +65,9 @@
 
 #include <pluginlib/class_list_macros.h>
 
+//Uncomment to enable display
+#define DEBUG_DISPLAY
+
 using namespace cv;
 
 namespace hiwr_opencv_detector
@@ -170,7 +173,6 @@ public:
 
     bool configure( );
     void processTrackingFrame(Mat frame );
-    void processTiredFrame(Mat frame );
     void processFrame(Mat frame );
     Rect trackKeypoints(Mat img1, Mat img0);
     void addKeypoints( Mat input_image,Rect track_box);
